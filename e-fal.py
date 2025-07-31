@@ -5,6 +5,7 @@ import threading
 import time
 import openpyxl
 import pyautogui
+from PIL import Image, ImageTk
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -19,8 +20,8 @@ class TJRJInterface:
     def __init__(self, root):
         self.root = root
         self.root.title("E-Fal - Emissão de Certidão Falência")
-        self.root.geometry("500x600")
-        self.root.configure(bg='#f0f0f0')
+        self.root.geometry("500x700")
+        self.root.configure(bg='#1e1e1e')  # Fundo escuro
         
         # Variáveis
         self.caminho_excel = tk.StringVar()
@@ -50,10 +51,23 @@ class TJRJInterface:
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
         
+        # Carrega o logo
+        logo_path = os.path.join(os.path.dirname(__file__), "assets/E-Fal.png")
+        logo_image = Image.open(logo_path)
+        logo_image = logo_image.resize((120, 120), Image.LANCZOS)  # ajuste o tamanho conforme necessário
+        self.logo_photo = ImageTk.PhotoImage(logo_image)
+
+       # Frame horizontal para logo e título
+        header_frame = tk.Frame(main_frame, bg="#1e1e1e")
+        header_frame.grid(row=0, column=0, columnspan=5, pady=(0, 10), sticky="w")
+        # Logo
+        logo_label = tk.Label(header_frame, image=self.logo_photo, bg="#1e1e1e")
+        logo_label.pack(side="left", padx=(0, 10))
+
         # Título
-        title_label = ttk.Label(main_frame, text="E-Fal", 
-                               font=('Arial', 16, 'bold'))
-        title_label.grid(row=0, column=0, columnspan=3, pady=(0, 20))
+        title_label = tk.Label(header_frame, text="                  E-Fal                                  ",
+                            font=('Arial', 16, 'bold'), fg="white", bg="#1e1e1e")
+        title_label.pack(side="left")
         
         # Frame de configurações
         config_frame = ttk.LabelFrame(main_frame, text="Configurações", padding="10")
@@ -351,6 +365,8 @@ class TJRJInterface:
             data_vencimento_formatada = self.formatar_data_vencimento(data_vencimento)
             self.atualizar_log(f"Data de vencimento extraída: {data_vencimento} (Formatada: {data_vencimento_formatada})")
             
+            if data_vencimento_formatada == "":
+                return data_vencimento_formatada
             # Clica no link para abrir a página de visualização do arquivo
             link_arquivo = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, '/html/body/div[2]/div/div[3]/div/div[1]/div[1]/table/tbody/tr[1]/td[1]/a'))
