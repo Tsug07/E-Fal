@@ -34,7 +34,7 @@ O **E-Fal** é uma ferramenta de automação desenvolvida para facilitar a emiss
 ## Como Usar
 1. Execute o script `testeCla.py`:
    ```bash
-   python testeCla.py
+   python e-fal.py
    ```
 2. Na interface gráfica:
    - **Selecione o arquivo Excel**: Clique em "Procurar" no campo "Arquivo Excel" e escolha um arquivo `.xlsx` com as colunas "Código", "Cliente", "CND" e "Pedido".
@@ -54,8 +54,8 @@ O arquivo Excel deve ter as seguintes colunas na primeira linha:
 Exemplo:
 | Código | Cliente         | CND             | Pedido       |
 |--------|-----------------|-----------------|--------------|
-| 12345  | João Silva      | CND FALERNCIA   | 2023-0012345 |
-| 67890  | Maria Oliveira  | CND FALERNCIA   | 2023-0067890 |
+| 12345  | João Silva      | CND FALENCIA   | 2023-0012345 |
+| 67890  | Maria Oliveira  | CND FALENCIA   | 2023-0067890 |
 
 ## Configurações
 - **URL do TJRJ**: Por padrão, a URL é `https://www3.tjrj.jus.br/CJE/certidao/judicial/visualizar?modelo=visualizar`. Pode ser alterada na interface, se necessário.

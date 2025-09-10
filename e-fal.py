@@ -15,6 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import psutil
 from datetime import datetime
+import sys
 
 class TJRJInterface:
     def __init__(self, root):
@@ -23,6 +24,18 @@ class TJRJInterface:
         self.root.geometry("500x700")
         self.root.configure(bg='#1e1e1e')  # Fundo escuro
         
+        # Configura o ícone da janela
+        if getattr(sys, 'frozen', False):
+            # Se for um executável, usa o diretório temporário do PyInstaller
+            icon_path = os.path.join(sys._MEIPASS, "assets", "E-Fal.ico")
+        else:
+            # Se for no ambiente de desenvolvimento, usa o caminho relativo
+            icon_path = os.path.join(os.path.dirname(__file__), "assets", "E-Fal.ico")
+        try:
+            self.root.iconbitmap(icon_path)
+        except tk.TclError as e:
+            print(f"Erro ao carregar ícone: {e}")
+            
         # Variáveis
         self.caminho_excel = tk.StringVar()
         self.pasta_destino = tk.StringVar(value=r"C:\Users\VM001\Documents\CNDs\FALENCIA")
@@ -40,7 +53,10 @@ class TJRJInterface:
         }
         
         self.setup_ui()
-        
+        # Registra erro de ícone no log, se houver
+        if 'icon_path' in locals() and not os.path.exists(icon_path):
+            self.atualizar_log(f"Ícone não encontrado em: {icon_path}")
+            
     def setup_ui(self):
         # Frame principal
         main_frame = ttk.Frame(self.root, padding="10")
@@ -51,8 +67,13 @@ class TJRJInterface:
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
         
-        # Carrega o logo
-        logo_path = os.path.join(os.path.dirname(__file__), "assets/E-Fal.png")
+        
+        if getattr(sys, 'frozen', False):
+            # Se for um executável, usa o diretório temporário do PyInstaller
+            logo_path = os.path.join(sys._MEIPASS, "assets", "E-Fal.png")
+        else:
+            # Se for no ambiente de desenvolvimento, usa o caminho relativo
+            logo_path = os.path.join(os.path.dirname(__file__), "assets", "E-Fal.png")
         logo_image = Image.open(logo_path)
         logo_image = logo_image.resize((120, 120), Image.LANCZOS)  # ajuste o tamanho conforme necessário
         self.logo_photo = ImageTk.PhotoImage(logo_image)
@@ -319,7 +340,7 @@ class TJRJInterface:
             
             # Monta o nome do arquivo
             nome_arquivo = f"{info['codigo']} - CND FALENCIA - {data_vencimento}"
-            pyautogui.write(nome_arquivo.upper())
+            pyautogui.write(nome_arquivo)
             self.atualizar_log(f"Nome do arquivo inserido: {nome_arquivo}")
             
             pyautogui.press('enter')
