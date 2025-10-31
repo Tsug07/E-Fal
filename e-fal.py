@@ -247,18 +247,19 @@ class TJRJInterface:
         try:
             wb = openpyxl.load_workbook(caminho_excel)
             sheet = wb.active
-            dados = {}
+            dados = []
             colunas = self.MODELOS[modelo]["colunas"]
             
             for row in sheet.iter_rows(min_row=linha_inicial, values_only=True):
                 if row and len(row) >= len(colunas):
                     codigo, cliente, cnd, pedido = row[:4]
                     if codigo and pedido:
-                        dados[codigo] = {
+                        dados.append({
                             'codigo': codigo,
                             'cliente': cliente,
+                            'cnd': cnd,
                             'pedido': pedido,
-                        }
+                        })
                         
             return dados if dados else None
             
@@ -339,7 +340,7 @@ class TJRJInterface:
                 time.sleep(0.2)
             
             # Monta o nome do arquivo
-            nome_arquivo = f"{info['codigo']} - CND FALENCIA - {data_vencimento}"
+            nome_arquivo = f"{info['codigo']} - {info['cnd']} - {data_vencimento}"
             pyautogui.write(nome_arquivo)
             self.atualizar_log(f"Nome do arquivo inserido: {nome_arquivo}")
             
@@ -380,7 +381,7 @@ class TJRJInterface:
             
             # Aguarda a tabela carregar e extrai a data de vencimento
             data_vencimento_elemento = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[3]/div/div[1]/div[1]/table/tbody/tr[1]/td[5]'))
+                EC.presence_of_element_located((By.XPATH, '/html/body/div[2]/div/div[3]/div/div[1]/div[1]/table/tbody/tr[1]/td[6]'))
             )
             data_vencimento = data_vencimento_elemento.text.strip()
             data_vencimento_formatada = self.formatar_data_vencimento(data_vencimento)
@@ -453,11 +454,11 @@ class TJRJInterface:
             
             # Processa cada pedido
             total_pedidos = len(dados)
-            for i, (codigo, info) in enumerate(dados.items(), 1):
+            for i, info in enumerate(dados, 1):
                 if not self.executando:
                     break
                     
-                self.atualizar_log(f"Processando {i}/{total_pedidos} - Código: {codigo}, Cliente: {info['cliente']}, Pedido: {info['pedido']}")
+                self.atualizar_log(f"Processando {i}/{total_pedidos} - Código: {info['codigo']}, Cliente: {info['cliente']}, Pedido: {info['pedido']}")
                 
                 # Processa o pedido
                 data_vencimento = self.processar_pedido(self.driver, info)
