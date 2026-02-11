@@ -47,7 +47,7 @@ class TJRJInterface:
         # Configurações globais
         self.MODELOS = {
             "E-falencia": {
-                "colunas": ["Codigo", "Cliente", "CND", "Pedido"],
+                "colunas": ["Código", "Nome", "Cliente - CNPJ", "CND", "Vencimento", "Renovação", "Observação"],
                 "mensagem_padrao": "ONEmessage"
             }
         }
@@ -138,14 +138,22 @@ class TJRJInterface:
         dados_frame.rowconfigure(0, weight=1)
         
         # Treeview para dados
-        self.tree = ttk.Treeview(dados_frame, columns=('Codigo', 'Cliente', 'Pedido'), show='headings', height=8)
+        self.tree = ttk.Treeview(dados_frame, columns=('Codigo', 'Nome', 'CNPJ', 'CND', 'Vencimento', 'Renovacao', 'Observacao'), show='headings', height=8)
         self.tree.heading('Codigo', text='Código')
-        self.tree.heading('Cliente', text='Cliente')
-        self.tree.heading('Pedido', text='Pedido')
-        
-        self.tree.column('Codigo', width=100)
-        self.tree.column('Cliente', width=300)
-        self.tree.column('Pedido', width=150)
+        self.tree.heading('Nome', text='Nome')
+        self.tree.heading('CNPJ', text='Cliente - CNPJ')
+        self.tree.heading('CND', text='CND')
+        self.tree.heading('Vencimento', text='Vencimento')
+        self.tree.heading('Renovacao', text='Renovação')
+        self.tree.heading('Observacao', text='Observação')
+
+        self.tree.column('Codigo', width=70)
+        self.tree.column('Nome', width=150)
+        self.tree.column('CNPJ', width=120)
+        self.tree.column('CND', width=80)
+        self.tree.column('Vencimento', width=80)
+        self.tree.column('Renovacao', width=80)
+        self.tree.column('Observacao', width=100)
         
         # Scrollbar para treeview
         tree_scroll = ttk.Scrollbar(dados_frame, orient=tk.VERTICAL, command=self.tree.yview)
@@ -228,10 +236,11 @@ class TJRJInterface:
                 
             # Carrega os dados
             for row in sheet.iter_rows(min_row=2, values_only=True):
-                if row and len(row) >= 4:
-                    codigo, cliente, cnd, pedido = row[:4]
-                    if codigo and pedido:  # Verifica se os campos obrigatórios estão preenchidos
-                        self.tree.insert('', 'end', values=(codigo, cliente, pedido))
+                if row and len(row) >= 7:
+                    codigo, nome, cnpj, cnd, vencimento, renovacao, observacao = row[:7]
+                    if codigo and observacao:  # Verifica se os campos obrigatórios estão preenchidos
+                        codigo = str(int(codigo)) if isinstance(codigo, float) else str(codigo)
+                        self.tree.insert('', 'end', values=(codigo, nome, cnpj, cnd, vencimento, renovacao, observacao))
                         
             messagebox.showinfo("Sucesso", "Excel validado com sucesso!")
             self.atualizar_log("Excel validado com sucesso!")
@@ -252,13 +261,17 @@ class TJRJInterface:
             
             for row in sheet.iter_rows(min_row=linha_inicial, values_only=True):
                 if row and len(row) >= len(colunas):
-                    codigo, cliente, cnd, pedido = row[:4]
-                    if codigo and pedido:
+                    codigo, nome, cnpj, cnd, vencimento, renovacao, observacao = row[:7]
+                    if codigo and observacao:
+                        codigo = str(int(codigo)) if isinstance(codigo, float) else str(codigo)
                         dados.append({
                             'codigo': codigo,
-                            'cliente': cliente,
+                            'nome': nome,
+                            'cnpj': cnpj,
                             'cnd': cnd,
-                            'pedido': pedido,
+                            'vencimento': vencimento,
+                            'renovacao': renovacao,
+                            'observacao': observacao,
                         })
                         
             return dados if dados else None
@@ -369,8 +382,8 @@ class TJRJInterface:
                 EC.element_to_be_clickable((By.XPATH, '//*[@id="NumeroCertidao"]'))
             )
             campo_requerimento.clear()
-            campo_requerimento.send_keys(info['pedido'])
-            self.atualizar_log(f"Campo de requerimento preenchido com: {info['pedido']}")
+            campo_requerimento.send_keys(info['observacao'])
+            self.atualizar_log(f"Campo de requerimento preenchido com: {info['observacao']}")
             
             # Clica no botão Visualizar
             botao_visualizar = WebDriverWait(driver, 10).until(
@@ -406,9 +419,9 @@ class TJRJInterface:
             
             # Lida com a janela "Salvar como"
             if self.salvar_arquivo(info, data_vencimento_formatada):
-                self.atualizar_log(f"Arquivo salvo para pedido {info['pedido']}.")
+                self.atualizar_log(f"Arquivo salvo para pedido {info['observacao']}.")
             else:
-                self.atualizar_log(f"Falha ao salvar arquivo para pedido {info['pedido']}.")
+                self.atualizar_log(f"Falha ao salvar arquivo para pedido {info['observacao']}.")
                 return None
                 
             # Fecha a aba de visualização
@@ -419,7 +432,7 @@ class TJRJInterface:
             return data_vencimento
             
         except Exception as e:
-            self.atualizar_log(f"Erro ao processar pedido {info['pedido']}: {str(e)}")
+            self.atualizar_log(f"Erro ao processar pedido {info['observacao']}: {str(e)}")
             return None
             
     def processar_dados(self):
@@ -458,14 +471,14 @@ class TJRJInterface:
                 if not self.executando:
                     break
                     
-                self.atualizar_log(f"Processando {i}/{total_pedidos} - Código: {info['codigo']}, Cliente: {info['cliente']}, Pedido: {info['pedido']}")
+                self.atualizar_log(f"Processando {i}/{total_pedidos} - Código: {info['codigo']}, Nome: {info['nome']}, Observação: {info['observacao']}")
                 
                 # Processa o pedido
                 data_vencimento = self.processar_pedido(self.driver, info)
                 if data_vencimento:
-                    self.atualizar_log(f"Processamento concluído para pedido {info['pedido']}. Data de vencimento: {data_vencimento}")
+                    self.atualizar_log(f"Processamento concluído para pedido {info['observacao']}. Data de vencimento: {data_vencimento}")
                 else:
-                    self.atualizar_log(f"Falha no processamento do pedido {info['pedido']}.")
+                    self.atualizar_log(f"Falha no processamento do pedido {info['observacao']}.")
                 
                 # Volta para a página inicial
                 if self.executando:
