@@ -5,6 +5,7 @@ import threading
 import time
 import openpyxl
 import pyautogui
+import pyperclip
 from PIL import Image, ImageTk
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -331,36 +332,36 @@ class TJRJInterface:
         """Lida com a janela 'Salvar como'"""
         try:
             time.sleep(2)
-            
-            # Pressiona Tab 6 vezes para focar no campo de caminho/nome
-            for _ in range(6):
-                pyautogui.press('tab')
-                time.sleep(0.2)
-            
-            pyautogui.press('enter')
-            time.sleep(0.5)
-            
-            # Digita o caminho da pasta
-            pyautogui.write(self.pasta_destino.get())
-            self.atualizar_log(f"Caminho da pasta inserido: {self.pasta_destino.get()}")
-            
-            pyautogui.press('enter')
-            time.sleep(3)
-            
-            # Pressiona Tab 6 vezes novamente para focar no campo de nome do arquivo
-            for _ in range(6):
-                pyautogui.press('tab')
-                time.sleep(0.2)
-            
-            # Monta o nome do arquivo
+
+            # Monta o caminho completo (pasta + nome do arquivo)
             nome_arquivo = f"{info['codigo']} - {info['cnd']} - {data_vencimento}"
-            pyautogui.write(nome_arquivo)
-            self.atualizar_log(f"Nome do arquivo inserido: {nome_arquivo}")
-            
+            caminho_completo = os.path.join(self.pasta_destino.get(), nome_arquivo)
+
+            # Foca na barra de endereço/nome do arquivo usando Alt+D (atalho padrão do Windows)
+            pyautogui.hotkey('alt', 'd')
+            time.sleep(0.5)
+
+            # Limpa o campo e digita o caminho completo
+            pyautogui.hotkey('ctrl', 'a')
+            time.sleep(0.2)
+
+            # Usa pyperclip para colar o caminho (suporta caracteres especiais)
+            pyperclip.copy(caminho_completo)
+            pyautogui.hotkey('ctrl', 'v')
+            time.sleep(0.5)
+
+            self.atualizar_log(f"Caminho completo inserido: {caminho_completo}")
+
+            # Confirma o salvamento
             pyautogui.press('enter')
-            self.atualizar_log("Arquivo salvo com sucesso.")
+            time.sleep(2)
+
+            # Verifica se apareceu diálogo de confirmação de substituição
+            # Se sim, pressiona Enter para confirmar
+            pyautogui.press('enter')
             time.sleep(1)
-            
+
+            self.atualizar_log("Arquivo salvo com sucesso.")
             return True
         except Exception as e:
             self.atualizar_log(f"Erro ao salvar arquivo: {str(e)}")
